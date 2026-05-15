@@ -24,7 +24,7 @@ function hideError() {
 function buildUrl() {
     let host = document.getElementById("host").value.trim();
     if (!host) return null;
-    if (!host.startsWith("https")) host = "https://" + host;
+    if (!host.startsWith("http")) host = "http://" + host;
     return host;
 }
 
