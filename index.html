@@ -1,0 +1,97 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+ <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pranav VM Monitor</title>
+
+
+</head>
+
+<body>
+
+<div id="topBar">
+
+    <div id="title">
+        <div class="dot"></div>
+        Pranav VM Monitor
+    </div>
+
+    <div class="badge">
+        LIVE SYSTEM MONITOR
+    </div>
+
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+    <div class="spinner"></div>
+    <div>Connecting VM...</div>
+</div>
+
+<!-- INPUT -->
+<div id="inputBar">
+    <input id="host" placeholder="Enter IP or domain (e.g. 192.168.1.10)" />
+    <button onclick="startMonitor()">Connect</button>
+</div>
+
+<!-- ERROR -->
+<div id="errorBox"></div>
+
+<!-- ACTIVE BAR -->
+<div id="activeBar">
+
+    <div class="vmInfo">
+        Active VM:
+        <span id="vmTag"></span>
+    </div>
+
+    <div class="vmActions">
+        <button onclick="refreshAll()">🔄 Refresh</button>
+        <button onclick="loadLogs()">📜 Logs</button>
+        <button class="removeBtn" onclick="removeVM()">✖ Remove</button>
+    </div>
+
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+    <div class="card">
+        <h3>System</h3>
+        <div id="system"></div>
+    </div>
+
+    <div class="card">
+        <h3>CPU</h3>
+        <div id="cpu"></div>
+        <button onclick="loadCpu()">Refresh</button>
+    </div>
+
+    <div class="card">
+        <h3>Memory</h3>
+        <div id="memory"></div>
+        <button onclick="loadMemory()">Refresh</button>
+    </div>
+
+    <div class="card">
+        <h3>Disk</h3>
+        <div id="disk"></div>
+        <button onclick="loadDisk()">Refresh</button>
+    </div>
+
+    <div id="logsCard">
+        Logs loading...
+        <button onclick="loadLogs()">Refresh Logs</button>
+    </div>
+
+</div>
+
+
+<script src="script.js"></script>
+</body>
+</html>
+    
+    
+
