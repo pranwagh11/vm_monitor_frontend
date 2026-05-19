@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Live Metrics Dashboard</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        display: flex;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+        width: 240px;
+        background: #111827;
+        border-right: 1px solid #1f2937;
+        height: 100vh;
+        padding: 16px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    .sidebar h2 {
+        font-size: 16px;
+        margin-bottom: 16px;
+        color: #38bdf8;
+    }
+
+    .menu-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        background: #0f172a;
+        border: 1px solid #1f2937;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: 0.2s;
+    }
+
+    .menu-item:hover {
+        background: #1f2937;
+    }
+
+    .vmname {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+
+    /* MAIN */
+    .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    header {
+        padding: 18px;
+        background: #111827;
+        border-bottom: 1px solid #1f2937;
+        font-weight: bold;
+    }
+
+    .status {
+        font-size: 12px;
+        margin-left: 10px;
+        color: #94a3b8;
+    }
+
+    .online { color: #22c55e; }
+    .offline { color: #ef4444; }
+
+    .container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    align-items: stretch;
+}
+   .card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 16px;
+
+    /* ✅ FIX HEIGHT */
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+    .title {
+        font-size: 13px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+    }
+
+    .value {
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    .bar {
+        height: 10px;
+        background: #1f2937;
+        border-radius: 10px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+
+    .fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.4s ease;
+        background: linear-gradient(90deg, #22c55e, #3b82f6);
+    }
+
+    .logs {
+        height: 320px;
+        overflow-y: auto;
+        font-size: 13px;
+    }
+
+    .log {
+        padding: 6px 0;
+        border-bottom: 1px solid #1f2937;
+        color: #cbd5e1;
+    }
+
+    .tag {
+        color: #38bdf8;
+        margin-right: 6px;
+    }
+
+    .active {
+        border: 1px solid #38bdf8 !important;
+        background: #1f2937 !important;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>🖥 VM List</h2>
+    <div id="vmList"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<header>
+    Live Metrics Dashboard
+    <span id="status" class="status">● Connecting...</span>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <div class="title">CPU Usage</div>
+        <div class="value" id="cpu">0%</div>
+        <div class="bar"><div class="fill" id="cpuBar"></div></div>
+    </div>
+
+    <div class="card">
+        <div class="title">Memory Usage</div>
+        <div class="value" id="memory">0%</div>
+        <div class="bar"><div class="fill" id="memoryBar"></div></div>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <div class="title">Live Logs</div>
+        <div class="logs" id="logs"></div>
+    </div>
+
+</div>
+
+</div>
+
+<script>
+const API_URL = "http://3.110.118.222:8080/metrics";
+
+const statusEl = document.getElementById("status");
+const vmList = document.getElementById("vmList");
+
+let latestData = {};
+let selectedVM = null;
+
+async function fetchMetrics() {
+    try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        latestData = data;
+
+        const vms = Object.keys(data);
+
+        if (!selectedVM || !data[selectedVM]) {
+            selectedVM = vms[0];
+        }
+
+        renderVMList(vms);
+        renderSelectedVM();
+
+        statusEl.textContent = "● Live";
+        statusEl.className = "status online";
+
+    } catch (err) {
+        console.error(err);
+        statusEl.textContent = "● Offline";
+        statusEl.className = "status offline";
+    }
+}
+
+function renderVMList(vms) {
+    vmList.innerHTML = "";
+
+    vms.forEach(vmKey => {
+        const vm = latestData[vmKey];
+
+        const div = document.createElement("div");
+        div.className = "menu-item";
+
+        if (vmKey === selectedVM) {
+            div.classList.add("active");
+        }
+
+        div.innerHTML = `
+            ${vmKey}
+            <div class="vmname">${vm.public_ip}</div>
+        `;
+
+        div.onclick = () => {
+            selectedVM = vmKey;
+            renderVMList(vms);
+            renderSelectedVM();
+        };
+
+        vmList.appendChild(div);
+    });
+}
+
+function renderSelectedVM() {
+    const vm = latestData[selectedVM];
+    if (!vm) return;
+
+    const cpu = Math.round(vm.cpu_load * 100);
+    const memory = Math.round(vm.memory_percent);
+
+    document.getElementById("cpu").innerText = cpu + "%";
+    document.getElementById("cpuBar").style.width = cpu + "%";
+
+    document.getElementById("memory").innerText = memory + "%";
+    document.getElementById("memoryBar").style.width = memory + "%";
+
+    addLog(
+        `${vm.hostname} | CPU ${cpu}% | MEM ${memory}% | IP ${vm.public_ip}`
+    );
+}
+
+function addLog(msg) {
+    const logs = document.getElementById("logs");
+
+    const div = document.createElement("div");
+    div.className = "log";
+
+    const time = new Date().toLocaleTimeString();
+    div.innerHTML = `<span class="tag">[${time}]</span> ${msg}`;
+
+    logs.prepend(div);
+
+    if (logs.children.length > 50) {
+        logs.removeChild(logs.lastChild);
+    }
+}
+
+setInterval(fetchMetrics, 2000);
+fetchMetrics();
+</script>
+
+</body>
+</html>
